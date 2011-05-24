@@ -60,12 +60,16 @@ class Piece(object):
     def draw(self, vx, vy):
         glPushMatrix()
         glTranslatef(vx, vy, 0.0)
-        glColor4f(0,0,0,1)
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-        glEnable(GL_TEXTURE_2D)
         quadratic = gluNewQuadric()
         gluQuadricNormals(quadratic, GLU_SMOOTH)		# Create Smooth Normals (NEW)
         gluQuadricTexture(quadratic, GL_TRUE)			# Create Texture Coords (NEW)
+        if self.is_selected:
+            glColor3f(0,1,0)
+            gluDisk(quadratic,0.0,0.11,16, 64)
+        else:
+            glColor4f(0,0,0,1)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+        glEnable(GL_TEXTURE_2D)
         gluDisk(quadratic,0.0,0.1,16, 64)
         glDisable(GL_TEXTURE_2D)
 
