@@ -1,6 +1,6 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from OpenGL.GLUT import glutSwapBuffers
+from OpenGL.GLUT import *
 import draw
 import event
 import resource
@@ -28,10 +28,21 @@ class Piece(object):
         namemap[_id] = label
         locals()[label] = _id
 
-    def __init__(self, _type):
+    UISTATE = ['NONE', 'PRESSED', 'SELECTED']
+    statemap = {}
+    for _id, state in enumerate(UISTATE):
+        statemap[_id] = state
+        locals()[state] = _id
+
+
+    def __init__(self, _type, color='red'):
         self._type = _type
-        self.color = 'red'
+        self.color = color
+        self.state = self.NONE
         self.texture = resource.texture.load(self.imgpath)
+
+    def __repr__(self):
+        return '%s: %s, %s' % (self.color, self.label, self.state)
 
     @property
     def label(self):
@@ -42,10 +53,13 @@ class Piece(object):
         return join('images', join(self.color, self.label.capitalize() +
                 '.png'))
 
-    def draw(self):
-        glPushMatrix()
-        glTranslatef(0.0, -1.0, 0.0)
+    @property
+    def is_selected(self):
+        return self.state == self.SELECTED
 
+    def draw(self, vx, vy):
+        glPushMatrix()
+        glTranslatef(vx, vy, 0.0)
         glColor4f(0,0,0,1)
         glBindTexture(GL_TEXTURE_2D, self.texture)
         glEnable(GL_TEXTURE_2D)
@@ -63,7 +77,7 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
     gy = 9  # grid number in y-axis
     def __init__(self, size):
         self.size = size
-        self.pieces = []    # expect each obj has draw method
+        self.pieces = {}    # { logical tuple : Piece obj } expect each obj has draw method
         self.color = (1.0,0.0,0.0)
         self.border = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
         self.dx = 2.0/float(self.gx)
@@ -75,7 +89,29 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
         self.screenz = None
 
     def onInit(self):
-        self.pieces.append(Piece(Piece.GENERAL))
+        initpieces = {
+                (4,9) : Piece.GENERAL,
+                (3,9) : Piece.ADVISOR,
+                (5,9) : Piece.ADVISOR,
+                (2,9) : Piece.ELEPHANT,
+                (6,9) : Piece.ELEPHANT,
+                (1,9) : Piece.HORSE,
+                (7,9) : Piece.HORSE,
+                (0,9) : Piece.CHARIOT,
+                (8,9) : Piece.CHARIOT,
+                (6,7) : Piece.CANNON,
+                (2,7) : Piece.CANNON,
+                (0,6) : Piece.SOLDIER,
+                (2,6) : Piece.SOLDIER,
+                (4,6) : Piece.SOLDIER,
+                (6,6) : Piece.SOLDIER,
+                (8,6) : Piece.SOLDIER,
+                }
+        for c, _type in initpieces.iteritems():
+            self.pieces[c] = Piece(_type, 'red')
+            ix, iy=c
+            d = (ix, -iy+self.gy)
+            self.pieces[d] = Piece(_type, 'black')
 
     @property
     def width(self):
@@ -84,26 +120,34 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
     def height(self):
         return float(self.size[1])
 
-    def addPiece(self, piece):
-        self.pieces.append(piece)
-
     def onMouse(self, button, state, x, y):
         if self.modelview is None or \
                 self.projectview is None or \
                 self.viewport is None or \
                 self.screenz is None:
             return
-        wx, wy, wz = gluUnProject(x, y, self.screenz, 
-                        self.modelview,
-                        self.projectview,
-                        self.viewport)
+        if button==GLUT_LEFT_BUTTON:
+            wx, wy, wz = gluUnProject(x, y, self.screenz, 
+                            self.modelview,
+                            self.projectview,
+                            self.viewport)
 
-        # convert to logical coordinate
-        print wx, wy
-        print self.view2logical(wx,wy)
+            # convert to logical coordinate
+            print wx, wy
+            lc = self.view2logical(wx,wy)
+            print lc
+            piece = self.pieces.get(lc)
+            if state == GLUT_DOWN:
+                for p in self.pieces.values(): p.state = Piece.NONE
+                piece.state = Piece.PRESSED
+            if piece.state == Piece.PRESSED and state == GLUT_UP:
+                piece.state = Piece.SELECTED
+
+            print piece
+
 
     def logical2view(self, x, y):
-        return (-1+self.dx*x, -1+self.dy*y)
+        return (-1+self.dx*x, 1-self.dy*y)
 
     def view2logical(self, x, y):
         for ix in xrange(0,self.gx+1):
@@ -175,8 +219,8 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
         glPopMatrix()
 
         # draw the pieces
-        for p in self.pieces:
-            p.draw()
+        for ic, p in self.pieces.iteritems():
+            p.draw(*self.logical2view(*ic))
 
         glPopMatrix()
 
