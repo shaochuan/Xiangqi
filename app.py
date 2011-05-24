@@ -25,7 +25,7 @@ class App(object):
         if self.idleDelegate:
             self.idleDelegate.onIdle()
             return
-        glutPostRedisplay()
+        #glutPostRedisplay()
 
     def onKey(self, *args):
         if not self.keyDelegate:
