@@ -168,6 +168,8 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
             lc = self.view2logical(wx,wy)
             print lc
             piece = self.pieces.get(lc)
+            if not piece:
+                return
             if state == GLUT_DOWN:
                 for p in self.pieces.values(): p.state = Piece.NONE
                 piece.state = Piece.PRESSED
