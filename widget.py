@@ -2,6 +2,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import glutSwapBuffers
 import draw
+import event
 import resource
 from os.path import join
 
@@ -57,12 +58,21 @@ class Piece(object):
         glPopMatrix()
 
 
-class Board(draw.DrawDelegate):
+class Board(draw.DrawDelegate, event.MouseDelegate):
+    gx = 8  # grid number in x-axis
+    gy = 9  # grid number in y-axis
     def __init__(self, size):
         self.size = size
         self.pieces = []    # expect each obj has draw method
         self.color = (1.0,0.0,0.0)
         self.border = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+        self.dx = 2.0/float(self.gx)
+        self.dy = 2.0/float(self.gy)
+        self.z = -3.0
+        self.modelview = None
+        self.projectview = None
+        self.viewport = None
+        self.screenz = None
 
     def onInit(self):
         self.pieces.append(Piece(Piece.GENERAL))
@@ -77,6 +87,35 @@ class Board(draw.DrawDelegate):
     def addPiece(self, piece):
         self.pieces.append(piece)
 
+    def onMouse(self, button, state, x, y):
+        if self.modelview is None or \
+                self.projectview is None or \
+                self.viewport is None or \
+                self.screenz is None:
+            return
+        wx, wy, wz = gluUnProject(x, y, self.screenz, 
+                        self.modelview,
+                        self.projectview,
+                        self.viewport)
+
+        # convert to logical coordinate
+        print wx, wy
+        print self.view2logical(wx,wy)
+
+    def logical2view(self, x, y):
+        return (-1+self.dx*x, -1+self.dy*y)
+
+    def view2logical(self, x, y):
+        for ix in xrange(0,self.gx+1):
+            fx = float(ix) - 0.5
+            if -1 + self.dx * fx < x < -1 + self.dx * (fx+1):
+                break
+        for iy in xrange(0,self.gy+1):
+            fy = float(iy) - 0.5
+            if -1 + self.dy * fy < y < -1 + self.dy * (fy+1):
+                break
+        return ix, iy
+
     def drawBorder(self):
         # draw the border
         for i,j in circulaate(len(self.border)):
@@ -86,18 +125,18 @@ class Board(draw.DrawDelegate):
             glVertex3f(qx, qy, 0)
 
     def drawHorizons(self):
-        r = 2.0/9.0
-        for y in xrange(1,9):
+        r = self.dy
+        for y in xrange(1,self.gy):
             glVertex3f(-1, -1+r*y, 0)
             glVertex3f(1, -1+r*y, 0)
 
     def drawVerticals(self):
-        rx = 2.0/8.0
-        ry = 2.0/9.0
-        for x in xrange(1,8):
+        rx = self.dx
+        ry = self.dy
+        for x in xrange(1,self.gx):
             glVertex3f(-1+rx*x, -1+ry*5, 0)
             glVertex3f(-1+rx*x, 1, 0)
-        for x in xrange(1,8):
+        for x in xrange(1,self.gx):
             glVertex3f(-1+rx*x, -1+ry*4, 0)
             glVertex3f(-1+rx*x, -1, 0)
 
@@ -105,13 +144,20 @@ class Board(draw.DrawDelegate):
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
-        glTranslatef(0.0, 0.0, -3.0)
+        glTranslatef(0.0, 0.0, self.z)
 
         glPushMatrix()
         glLineWidth(2)
         glClearColor(0.0, 0.0, 0.0, 0.0)
 
         glScale(1, self.height/self.width, 1)
+
+        self.modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
+        self.projectview = glGetDoublev(GL_PROJECTION_MATRIX)
+        self.viewport = glGetIntegerv(GL_VIEWPORT)
+        _,__,self.screenz = gluProject(0,1,0,self.modelview,
+                         self.projectview,
+                         self.viewport)
         # draw the grid
         glBegin(GL_LINES)
         glColor3f(*self.color)
