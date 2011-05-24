@@ -27,8 +27,7 @@ def getSceneFileName():
 window_size = (480, 640)
 window_name = 'Xiangqi'
 app = App()
-app.drawDelegate = widget.Board(window_size, [])
-
+app.drawDelegate = widget.Board(window_size)
 
 def initialization():
     glutInit([])
@@ -40,6 +39,10 @@ def initialization():
     glutIdleFunc(app.onIdle)
     glutReshapeFunc(app.onResize)
     glutKeyboardFunc(app.onKey)
+
+    glShadeModel(GL_SMOOTH)                # Enables Smooth Color Shading
+
+    app.onInit()
 
 def main():
     initialization()

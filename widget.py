@@ -1,6 +1,9 @@
 from OpenGL.GL import *
+from OpenGL.GLU import *
 from OpenGL.GLUT import glutSwapBuffers
 import draw
+import resource
+from os.path import join
 
 def circulaate(length):
     if length <= 2:
@@ -9,18 +12,70 @@ def circulaate(length):
         yield (x, x+1)
     yield (length-1, 0)
 
+
+class Piece(object):
+    LABELS = ['GENERAL',
+        'ADVISOR',
+        'ELEPHANT',
+        'HORSE',
+        'CHARIOT',
+        'CANNON',
+        'SOLDIER']
+
+    namemap = {}
+    for _id, label in enumerate(LABELS):
+        namemap[_id] = label
+        locals()[label] = _id
+
+    def __init__(self, _type):
+        self._type = _type
+        self.color = 'red'
+        self.texture = resource.texture.load(self.imgpath)
+
+    @property
+    def label(self):
+        return self.namemap[self._type]
+
+    @property
+    def imgpath(self):
+        return join('images', join(self.color, self.label.capitalize() +
+                '.png'))
+
+    def draw(self):
+        glPushMatrix()
+        glTranslatef(0.0, -1.0, 0.0)
+
+        glColor4f(0,0,0,1)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+        glEnable(GL_TEXTURE_2D)
+        quadratic = gluNewQuadric()
+        gluQuadricNormals(quadratic, GLU_SMOOTH)		# Create Smooth Normals (NEW)
+        gluQuadricTexture(quadratic, GL_TRUE)			# Create Texture Coords (NEW)
+        gluDisk(quadratic,0.0,0.1,16, 64)
+        glDisable(GL_TEXTURE_2D)
+
+        glPopMatrix()
+
+
 class Board(draw.DrawDelegate):
-    def __init__(self, size, pieces=[]):
+    def __init__(self, size):
         self.size = size
-        self.pieces = pieces    # expect each obj has draw method
+        self.pieces = []    # expect each obj has draw method
         self.color = (1.0,0.0,0.0)
         self.border = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+
+    def onInit(self):
+        self.pieces.append(Piece(Piece.GENERAL))
+
     @property
     def width(self):
         return float(self.size[0])
     @property
     def height(self):
         return float(self.size[1])
+
+    def addPiece(self, piece):
+        self.pieces.append(piece)
 
     def drawBorder(self):
         # draw the border
@@ -47,6 +102,7 @@ class Board(draw.DrawDelegate):
             glVertex3f(-1+rx*x, -1, 0)
 
     def onDraw(self):
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
         glTranslatef(0.0, 0.0, -3.0)
@@ -72,11 +128,12 @@ class Board(draw.DrawDelegate):
         glEnd()
         glPopMatrix()
 
-        
         # draw the pieces
         for p in self.pieces:
             p.draw()
 
         glPopMatrix()
+
+
         glutSwapBuffers()
 

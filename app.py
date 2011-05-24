@@ -11,6 +11,10 @@ class App(object):
         self.mouseDelegate = None  # expect callable or has onMouse method
         self.resizeDelegate = None # expect callable or has onResize method
 
+    def onInit(self):
+        if hasattr(self.drawDelegate, 'onInit'):
+            self.drawDelegate.onInit()
+
     def onDraw(self):
         if self.drawDelegate:
             self.drawDelegate.onDraw()
