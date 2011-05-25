@@ -1,38 +1,18 @@
+from os.path import join
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 import draw
 import event
 import resource
-from os.path import join
+import rule
 
-def circulaate(length):
+def circulate(length):
     if length <= 2:
         return
     for x in xrange(length-1):
         yield (x, x+1)
     yield (length-1, 0)
-
-def empty_or_enemy(curr, newp, board_pieces):
-    curr_piece = board_pieces[curr]
-    new_piece = board_pieces.get(newp)
-    if not new_piece:
-        return True
-    return curr_piece.is_enemy(new_piece)
-
-def general_rule(curr_pos, board_pieces):
-    x,y = curr_pos
-    candidates = [(x+1,y),
-                  (x-1,y),
-                  (x,y+1),
-                  (x,y-1)]
-    candidates = [c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces)]
-    candidates = [c for c in candidates if 0 <= c[0] <= int(Board.gx) ]
-    candidates = [c for c in candidates if 0 <= c[1] <= int(Board.gy) ]
-    possible_moves = candidates
-    
-    return possible_moves
-
 
 class Piece(object):
     LABELS = ['GENERAL',
@@ -59,7 +39,7 @@ class Piece(object):
         self._type = _type
         self.color = color
         self.state = self.NONE
-        self.rule = general_rule
+        self.rule = getattr(rule, self.label.lower())
         self.texture = resource.texture.load(self.imgpath)
 
     def __repr__(self):
@@ -194,7 +174,7 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
 
     def drawBorder(self):
         # draw the border
-        for i,j in circulaate(len(self.border)):
+        for i,j in circulate(len(self.border)):
             px,py = self.border[i]
             qx,qy = self.border[j]
             glVertex3f(px, py, 0)

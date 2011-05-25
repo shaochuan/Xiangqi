@@ -9,7 +9,6 @@ resolution = 64
 circle_points = [(cos(t*2*pi/resolution), sin(t*2*pi/resolution)) for t in xrange(0, resolution)]
 
 def draw_solid_ball(x,y,r=0.02,color=(0,1,0)):
-    print 'solid ball'
     glBegin(GL_TRIANGLE_FAN)
     glColor3f(*color)
     glVertex3f(x,y,0)
