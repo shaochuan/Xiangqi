@@ -209,8 +209,12 @@ def soldier(curr_pos, board_pieces):
     x,y = curr_pos
     forward = get_forward(curr_pos, board_pieces)
     if in_enemy_territory(curr_pos, board_pieces):
-        return [(x+1,y),
+        candidates = [(x+1,y),
              (x-1,y),
              (x,y+forward),]
     else:
-        return [(x,y+forward)]
+        candidates = [(x,y+forward)]
+    candidates = [c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces)]
+    candidates = [c for c in candidates if 0 <= c[0] <= int(widget.Board.gx) ]
+    candidates = [c for c in candidates if 0 <= c[1] <= int(widget.Board.gy) ]
+    return candidates

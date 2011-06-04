@@ -96,7 +96,7 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
         self.projectview = None
         self.viewport = None
         self.screenz = None
-        self.possible_moves = []
+        self.possible_moves = []  # UI drawing depend on this possible moves
 
     def onInit(self):
         initpieces = {
@@ -130,25 +130,49 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
     def height(self):
         return float(self.size[1])
 
+    def move_piece(self, old_lc, new_lc):
+        p = self.pieces.pop(old_lc)
+        if not p:
+            return
+        self.pieces[new_lc] = p
+
+    def handle_selected_mouse_event(self, button, state, lc):
+        # get_selected 
+        selected = [(c,p) for c,p in self.pieces.iteritems() if p.state ==
+                Piece.SELECTED]
+        if not selected:
+            return False
+        if button != GLUT_LEFT_BUTTON:
+            return False
+        if state != GLUT_DOWN:
+            return False
+        if lc in self.possible_moves:
+            c, p = selected[0]
+            self.move_piece(c, lc)
+            return True
+        return False
+
     def onMouse(self, button, state, x, y):
         if self.modelview is None or \
                 self.projectview is None or \
                 self.viewport is None or \
                 self.screenz is None:
             return
+        # convert to logical coordinate
+        wx, wy, wz = gluUnProject(x, y, self.screenz, 
+                        self.modelview,
+                        self.projectview,
+                        self.viewport)
+        lc = self.view2logical(wx,wy)
+        print lc
+        self.handle_selected_mouse_event(button, state, lc)
+
         self.possible_moves = []
         if button==GLUT_LEFT_BUTTON:
-            wx, wy, wz = gluUnProject(x, y, self.screenz, 
-                            self.modelview,
-                            self.projectview,
-                            self.viewport)
-
-            # convert to logical coordinate
-            print wx, wy
-            lc = self.view2logical(wx,wy)
-            print lc
             piece = self.pieces.get(lc)
             if not piece:
+                for p in self.pieces.values(): p.state = Piece.NONE
+                glutPostRedisplay()
                 return
             if state == GLUT_DOWN:
                 for p in self.pieces.values(): p.state = Piece.NONE
@@ -156,6 +180,7 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
             if piece.state == Piece.PRESSED and state == GLUT_UP:
                 piece.state = Piece.SELECTED
                 self.possible_moves = piece.rule(lc, self.pieces)
+
         glutPostRedisplay()
 
     def logical2view(self, x, y):
