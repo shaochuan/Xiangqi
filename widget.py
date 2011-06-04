@@ -6,6 +6,7 @@ import draw
 import event
 import resource
 import rule
+import itertools
 
 def circulate(length):
     if length <= 2:
@@ -84,6 +85,7 @@ class Piece(object):
 class Board(draw.DrawDelegate, event.MouseDelegate):
     gx = 8  # grid number in x-axis
     gy = 9  # grid number in y-axis
+    turn_iter = itertools.cycle(('red', 'black'))
     def __init__(self, size):
         self.size = size
         self.pieces = {}    # { logical tuple : Piece obj } expect each obj has draw method
@@ -97,6 +99,8 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
         self.viewport = None
         self.screenz = None
         self.possible_moves = []  # UI drawing depend on this possible moves
+        self.turn = self.turn_iter.next()
+        print self.turn
 
     def onInit(self):
         initpieces = {
@@ -149,6 +153,8 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
         if lc in self.possible_moves:
             c, p = selected[0]
             self.move_piece(c, lc)
+            #event.post_event(event.Event('GameControl', 'TakeTurn'))
+            self.turn = self.turn_iter.next()
             return True
         return False
 
@@ -177,7 +183,7 @@ class Board(draw.DrawDelegate, event.MouseDelegate):
             if state == GLUT_DOWN:
                 for p in self.pieces.values(): p.state = Piece.NONE
                 piece.state = Piece.PRESSED
-            if piece.state == Piece.PRESSED and state == GLUT_UP:
+            if piece.state == Piece.PRESSED and state == GLUT_UP and piece.color == self.turn:
                 piece.state = Piece.SELECTED
                 self.possible_moves = piece.rule(lc, self.pieces)
 

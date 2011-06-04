@@ -2,6 +2,9 @@ from OpenGL.GL import *
 from OpenGL.GLUT import glutSwapBuffers, glutPostRedisplay
 from OpenGL.GLU import gluPerspective
 import sys
+import event
+
+
 
 class App(object):
     def __init__(self):
@@ -25,7 +28,18 @@ class App(object):
         if self.idleDelegate:
             self.idleDelegate.onIdle()
             return
-        #glutPostRedisplay()
+        event.consume_events(self)
+
+    def handle_event(self, event):
+        if event._type == 'GameControl':
+            self.handle_game_control(event)
+            return
+
+    def handle_game_control(self, event):
+        if event.msg == 'GameOver':
+            print 'Game Over'
+            sys.exit(0)
+            return
 
     def onKey(self, *args):
         if not self.keyDelegate:
