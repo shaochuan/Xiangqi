@@ -73,7 +73,6 @@ def elephant(curr_pos, board_pieces):
     return possible_moves
 
 def horse(curr_pos, board_pieces):
-    # TODO: implement the block rule
     x,y = curr_pos
     candidates = []
     for px in (+1, -1):
@@ -84,8 +83,21 @@ def horse(curr_pos, board_pieces):
     candidates = [c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces)]
     candidates = [c for c in candidates if 0 <= c[0] <= int(widget.Board.gx) ]
     candidates = [c for c in candidates if 0 <= c[1] <= int(widget.Board.gy) ]
+    # filtering out the 'blocking rules' of a horse.
+    possible_moves = []
+    for c in candidates:
+        dx = c[0] - curr_pos[0]
+        dy = c[1] - curr_pos[1]
+        for sign in (+1,-1):
+            if (dx == sign*2 and board_pieces.get((curr_pos[0]+sign,
+                curr_pos[1]))) or \
+               (dy == sign*2 and board_pieces.get((curr_pos[0],
+                curr_pos[1]+sign))):
+                break
+        else:
+            possible_moves.append(c)
 
-    return candidates
+    return possible_moves
 
 def chariot(curr_pos, board_pieces):
     x,y = curr_pos
@@ -177,6 +189,28 @@ def cannon(curr_pos, board_pieces):
 
     return candidates
 
+def in_enemy_territory(curr_pos, board_pieces):
+    # TODO: any better implementation?
+    piece = board_pieces.get(curr_pos)
+    if piece.color == 'red' and 0 <= curr_pos[1] <= 4:
+        return True
+    if piece.color == 'black' and 5 <= curr_pos[1] <= 9:
+        return True
+    return False
+
+def get_forward(curr_pos, board_pieces):
+    piece = board_pieces.get(curr_pos)
+    if piece.color == 'red':
+        return -1
+    else:
+        return 1
+
 def soldier(curr_pos, board_pieces):
-    # TODO: real implementation
-    return near(curr_pos)
+    x,y = curr_pos
+    forward = get_forward(curr_pos, board_pieces)
+    if in_enemy_territory(curr_pos, board_pieces):
+        return [(x+1,y),
+             (x-1,y),
+             (x,y+forward),]
+    else:
+        return [(x,y+forward)]
