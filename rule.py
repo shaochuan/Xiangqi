@@ -27,15 +27,44 @@ def near(curr_pos):
        (x,y-1)]
   return nears
 
+def down_line(curr_pos):
+  ''' Return points starting from current posistion to the downer boarder. '''
+  x, y = curr_pos
+  for cy in xrange(y+1, int(widget.Board.gy)+1):
+    yield x, cy
+
+def up_line(curr_pos):
+  ''' Return points starting from current posistion to the upper boarder. '''
+  x, y = curr_pos
+  for cy in range(y-1, -1, -1):
+    yield x, cy
+
+def is_general_territory(curr_pos):
+  ''' A predicate to determine if the current position is within "General's territory" '''
+  x, y = curr_pos
+  return 3 <= x <= 5 and (int(widget.Board.gy)-2 <= y <= int(widget.Board.gy) or 0 <= y <= 2)
+
 def general(curr_pos, board_pieces):
+  ''' Rule for general. '''
   candidates = near(curr_pos)
   candidates = (c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces))
-  candidates = (c for c in candidates if 0 <= c[0] <= int(widget.Board.gx))
-  candidates = (c for c in candidates if 0 <= c[1] <= int(widget.Board.gy))
+  candidates = (c for c in candidates if is_general_territory(c))
   possible_moves = list(candidates)
 
   # flying general rule
+  x, y = curr_pos
+  if get_forward(curr_pos, board_pieces) > 0:
+    line = down_line(curr_pos)
+  else:
+    line = up_line(curr_pos)
 
+  for cx, cy in line:
+    piece = board_pieces.get((cx,cy))
+    print cx, cy
+    if piece:
+      if piece.is_general():
+        possible_moves.append((cx,cy))
+      break
 
   return possible_moves
 
@@ -46,11 +75,9 @@ def advisor(curr_pos, board_pieces):
     for ny in (-1,0,1):
       candidates.append( (x+nx,y+ny) )
 
-  candidates = [c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces)]
-  candidates = [c for c in candidates if 3 <= c[0] <= 5 ]
-  candidates = [c for c in candidates if int(widget.Board.gy)-2 <= c[1] <= int(widget.Board.gy) 
-      or 0 <= c[1] <= 2]
-
+  candidates = (c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces))
+  candidates = (c for c in candidates if is_general_territory(c))
+  
   possible_moves = candidates
 
   return possible_moves
@@ -220,3 +247,7 @@ def soldier(curr_pos, board_pieces):
   candidates = [c for c in candidates if 0 <= c[0] <= int(widget.Board.gx) ]
   candidates = [c for c in candidates if 0 <= c[1] <= int(widget.Board.gy) ]
   return candidates
+
+
+if __name__=='__main__':
+  print list(up_line((0,1)))

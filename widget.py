@@ -62,6 +62,9 @@ class Piece(object):
   def is_enemy(self, another_piece):
     return self.color != another_piece.color
 
+  def is_general(self):
+    return self._type == Piece.GENERAL
+
   def draw(self, vx, vy):
     glPushMatrix()
     glTranslatef(vx, vy, 0.0)
