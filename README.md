@@ -1,5 +1,6 @@
 
 [Xiangqi](http://en.wikipedia.org/wiki/Xiangqi) Game
+====================================================
 
 EXECUTION ENVIRONMENT
 =====================
@@ -9,10 +10,10 @@ working under Linux system.
 Installation
 ============
 Package Dependency
-1. Python 2.7 or higher.
-2. PyOpenGL.
+ - Python 2.7 or higher.
+ - PyOpenGL.
    $ sudo pip install PyOpenGL PyOpenGL_accelerate
-3. PIL
+ - PIL
    $ sudo pip install PIL
 
 HOW TO RUN?
