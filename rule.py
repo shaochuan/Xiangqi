@@ -39,8 +39,8 @@ def up_line(curr_pos):
   for cy in range(y-1, -1, -1):
     yield x, cy
 
-def is_general_territory(curr_pos):
-  ''' A predicate to determine if the current position is within "General's territory" '''
+def is_in_palace(curr_pos):
+  ''' A predicate to determine if the current position is in palace. '''
   x, y = curr_pos
   return 3 <= x <= 5 and (int(widget.Board.gy)-2 <= y <= int(widget.Board.gy) or 0 <= y <= 2)
 
@@ -48,7 +48,7 @@ def general(curr_pos, board_pieces):
   ''' Rule for general. '''
   candidates = near(curr_pos)
   candidates = (c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces))
-  candidates = (c for c in candidates if is_general_territory(c))
+  candidates = (c for c in candidates if is_in_palace(c))
   possible_moves = list(candidates)
 
   # flying general rule
@@ -69,16 +69,20 @@ def general(curr_pos, board_pieces):
   return possible_moves
 
 def advisor(curr_pos, board_pieces):
+  ''' Rule for advisor. '''
   x,y = curr_pos
-  candidates = []
-  for nx in (-1,0,1):
-    for ny in (-1,0,1):
-      candidates.append( (x+nx,y+ny) )
-
-  candidates = (c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces))
-  candidates = (c for c in candidates if is_general_territory(c))
   
-  possible_moves = candidates
+  def diagonal(x,y):
+    ''' Diagonal posistions starting at (x,y) '''
+    for nx in (-1,1):
+      for ny in (-1,1):
+        yield (x+nx, y+ny)
+  
+  candidates = diagonal(x,y)
+  candidates = (c for c in candidates if empty_or_enemy(curr_pos, c, board_pieces))
+  candidates = (c for c in candidates if is_in_palace(c))
+  
+  possible_moves = list(candidates)
 
   return possible_moves
 
