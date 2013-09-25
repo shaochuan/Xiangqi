@@ -12,9 +12,9 @@ Installation
 Package Dependency
  - Python 2.7 or higher.
  - PyOpenGL.
-   $ sudo pip install PyOpenGL PyOpenGL_accelerate
+   - $ sudo pip install PyOpenGL PyOpenGL_accelerate
  - PIL
-   $ sudo pip install PIL
+   - $ sudo pip install PIL
 
 HOW TO RUN?
 ===========
